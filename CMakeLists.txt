@@ -94,12 +94,24 @@ if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
 endif()
 
 #
-# Conan
+# Include conan cmake script
 #
 include(${CMAKE_BINARY_DIR}/conan.cmake)
+
+#
+# Add 'bincrafters' repository
+#
+conan_add_remote(NAME bincrafters
+                 INDEX 1
+                 URL https://api.bintray.com/conan/bincrafters/public-conan
+                 VERIFY_SSL True)
+
+#
+# Conan setup
+#
 conan_cmake_run(CONANFILE DEPENDENCIES
-        BASIC_SETUP
-        BUILD missing)
+                BASIC_SETUP
+                BUILD missing)
 
 #
 # Check if Conan exist
