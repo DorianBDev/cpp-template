@@ -13,6 +13,7 @@ Checks: >
   -misc-unused-parameters,
   -cppcoreguidelines-avoid-non-const-global-variables,
   -llvm-header-guard,
+  -hicpp-signed-bitwise,
 WarningsAsErrors:  '*'
 CheckOptions:
   - key:    readability-identifier-naming.ClassCase
