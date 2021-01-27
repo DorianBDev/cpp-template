@@ -1,0 +1,29 @@
+name: 📊 Valgrind check
+
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04 # Update Ubuntu version here.
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install Conan
+      shell: bash
+      run: |
+        sudo pip install conan
+
+    - name: Install Valgrind
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install valgrind -y
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release
+
+    - name: Run Valgrind
+      shell: bash
+      run: |
+        cd build
+        cmake --build . --config Release --target Valgrind

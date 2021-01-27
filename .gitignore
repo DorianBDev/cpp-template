@@ -1,0 +1,12 @@
+build/*
+!build/.keepme
+.idea/
+
+src/Version.h
+
+doc/build/*
+!doc/build/.keepme
+doc/config/DoxyFile
+
+tests/cmake/*
+tests/lib/*

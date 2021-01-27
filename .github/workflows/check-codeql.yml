@@ -1,0 +1,41 @@
+name: 📊 CodeQL check
+
+env:
+  BUILD_TYPE: Release # Change build type here.
+
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'cpp' ]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    # Initializes the CodeQL tools for scanning.
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v1
+      with:
+        languages: ${{ matrix.language }}
+
+    - name: Install Conan
+      shell: bash
+      run: |
+        sudo pip install conan
+
+    - name: Build
+      shell: bash
+      run: |
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DDISABLE_LINTERS=""
+        cmake --build . --config $BUILD_TYPE
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v1

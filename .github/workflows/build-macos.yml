@@ -1,0 +1,32 @@
+name: 🍎 MacOS build
+
+on: [push, pull_request, workflow_dispatch]
+
+env:
+  BUILD_TYPE: Release # Change build type here.
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install Conan
+      shell: bash
+      run: |
+        brew install conan
+        conan profile new default --detect --force
+
+    - name: Build
+      shell: bash
+      run: |
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_C_COMPILER="$(brew --prefix llvm)/bin/clang" -DCMAKE_CXX_COMPILER="$(brew --prefix llvm)/bin/clang++"
+        cmake --build . --config $BUILD_TYPE
+
+    - name: Tests
+      shell: bash
+      run: |
+        cd build/tests/
+        ctest

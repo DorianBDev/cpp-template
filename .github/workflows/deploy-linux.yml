@@ -1,0 +1,37 @@
+name: 🐧 Linux deploy
+
+on: [workflow_dispatch]
+
+env:
+  BUILD_TYPE: Release # Change build type here.
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04 # Update Ubuntu version here.
+
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Install Conan
+      shell: bash
+      run: |
+        sudo pip install conan
+
+    - name: Build
+      shell: bash
+      run: |
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DDISABLE_LINTERS="" -DDISABLE_TESTS=""
+        cmake --build . --config $BUILD_TYPE
+
+    - name: Upload binaries
+      uses: actions/upload-artifact@v2
+      with:
+        name: Binaries_linux_x64
+        path: build/bin/
+        
+    - name: Upload libs
+      uses: actions/upload-artifact@v2
+      with:
+        name: Libs_linux_x64
+        path: build/lib/

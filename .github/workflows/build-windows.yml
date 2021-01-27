@@ -1,0 +1,31 @@
+name: 💾 Windows build
+
+on: [push, pull_request, workflow_dispatch]
+
+env:
+  BUILD_TYPE: Release # Change build type here.
+
+jobs:
+  build:
+    runs-on: windows-latest # Change Windows version here.
+
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Install Conan
+      shell: cmd
+      run: |
+        pip install conan
+
+    - name: Build
+      shell: bash
+      run: |
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+        cmake --build . --config $BUILD_TYPE
+
+    - name: Tests
+      shell: bash
+      run: |
+        cd build/tests/
+        ctest

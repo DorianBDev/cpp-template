@@ -1,0 +1,34 @@
+name: 📊 Format check
+
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04 # Update Ubuntu version here.
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 2
+
+    - name: Install Conan
+      shell: bash
+      run: |
+        sudo pip install conan
+
+    - name: Install clang-format
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang-format
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DCHECK_FORMAT_PREV_DIFF=""
+
+    - name: Run clang-format
+      shell: bash
+      run: |
+        cd build
+        cmake --build . --config Release --target CheckDiffFormat
+        [[ -s patch.txt ]] && echo "*** The following formatting errors were found:" || echo "*** No formatting errors found."
+        cat patch.txt
+        [[ -s patch.txt ]] && exit 1 || exit 0

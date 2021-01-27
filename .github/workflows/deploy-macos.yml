@@ -1,0 +1,39 @@
+name: 🍎 MacOS deploy
+
+on: [workflow_dispatch]
+
+env:
+  BUILD_TYPE: Release # Change build type here.
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install Conan
+      shell: bash
+      run: |
+        brew install conan
+        conan profile new default --detect --force
+
+    - name: Build
+      shell: bash
+      run: |
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_C_COMPILER="$(brew --prefix llvm)/bin/clang" \
+        -DCMAKE_CXX_COMPILER="$(brew --prefix llvm)/bin/clang++" -DDISABLE_LINTERS="" -DDISABLE_TESTS=""
+        cmake --build . --config $BUILD_TYPE
+
+    - name: Upload binaries
+      uses: actions/upload-artifact@v2
+      with:
+        name: Binaries_macos_x64
+        path: build/bin/
+        
+    - name: Upload libs
+      uses: actions/upload-artifact@v2
+      with:
+        name: Libs_macos_x64
+        path: build/lib/
