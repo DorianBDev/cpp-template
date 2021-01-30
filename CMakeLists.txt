@@ -160,6 +160,7 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}"
                                  -DCMAKE_SYSTEM_NAME="${CMAKE_SYSTEM_NAME}"
                                  -DCONFIGURATION="${CONFIGURATION}"
+                                 -DPROJECT_NAME="${PROJECT_NAME}"
                                  -P "${CMAKE_CURRENT_SOURCE_DIR}/etc/cmake/ConfigureFiles.cmake"
         DEPENDS "${PROJECT_SOURCE_DIR}/VERSION"
 )
