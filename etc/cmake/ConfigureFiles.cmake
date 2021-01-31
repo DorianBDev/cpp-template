@@ -23,8 +23,8 @@ list(GET VERSION_FILE_CONTENT 0 PROJECT_VERSION)
 list(GET VERSION_FILE_CONTENT 1 PROJECT_RELEASE_DATE)
 
 # Print information
-if("${PROJECT_NAME}" STREQUAL "")
-    # If the project name is not set, then we are in the build process
+if(NOT CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+    # We are in the build process
     execute_process(COMMAND ${CMAKE_COMMAND} -E cmake_echo_color --red --bold
             "======================================="
             "\t Project version: ${PROJECT_VERSION}"
@@ -35,6 +35,7 @@ if("${PROJECT_NAME}" STREQUAL "")
             "=======================================")
 else()
     # Otherwise we are in the CMakeLists load/reload process
+    message(STATUS "Project name: ${PROJECT_NAME}")
     message(STATUS "Project version: ${PROJECT_VERSION}")
     message(STATUS "Release date: ${PROJECT_RELEASE_DATE}")
 endif()
