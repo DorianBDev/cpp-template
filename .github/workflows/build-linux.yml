@@ -28,4 +28,4 @@ jobs:
       shell: bash
       run: |
         cd build/tests/
-        ctest
+        ctest --verbose
