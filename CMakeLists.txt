@@ -100,47 +100,9 @@ endif()
 ############################################################################
 
 #
-# Download Conan automatically, you can also just copy the conan.cmake file
+# Include the dependencies parser
 #
-if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
-    message(STATUS "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
-    file(DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/master/conan.cmake" "${CMAKE_BINARY_DIR}/conan.cmake")
-endif()
-
-#
-# Include conan cmake script
-#
-include(${CMAKE_BINARY_DIR}/conan.cmake)
-
-#
-# Add 'bincrafters' repository
-#
-conan_add_remote(NAME bincrafters
-                 INDEX 1
-                 URL https://api.bintray.com/conan/bincrafters/public-conan
-                 VERIFY_SSL True)
-
-#
-# Conan setup
-#
-conan_cmake_run(CONANFILE DEPENDENCIES
-                BASIC_SETUP
-                BUILD missing)
-
-#
-# Check if Conan exist
-#
-if(NOT EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-    message(WARNING "You need to install Conan first https://conan.io/.")
-else()
-    include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-    conan_basic_setup()
-endif()
-
-#
-# Link dependencies to all targets
-#
-link_libraries(${CONAN_LIBS})
+include(${CMAKE_CURRENT_SOURCE_DIR}/etc/cmake/DependenciesParser.cmake)
 
 
 ############################################################################
