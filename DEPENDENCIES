@@ -5,6 +5,7 @@
 # Format:                                                             #
 # - "pack/version" for both (system search first, if not found conan) #
 # - "pack/[versionMin,versionMax]"                                    #
+# - "pack/[versionMin]"                                               #
 # - "pack/version@conanRepository"                                    #
 #                                                                     #
 # Package names are case sensitive, see cmake find_package()          #
@@ -12,5 +13,5 @@
 #######################################################################
 
 SFML/2.5.1@bincrafters/stable
-SDL2/2.0.14
-OpenCV/[3.4.3,4.3.0]
+SDL2/[2.0.12]@bincrafters/stable
+OpenCV/[4.1.2,4.5.1]

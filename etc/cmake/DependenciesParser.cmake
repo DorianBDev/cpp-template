@@ -21,9 +21,17 @@ STRING(REGEX REPLACE ";;" ";" DEPENDENCIES_FILE_CONTENT "${DEPENDENCIES_FILE_CON
 # Parse dependencies
 foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
 
+    # Remove any space in the line
+    STRING(REGEX REPLACE " " "" LINE "${LINE}")
+
     # Parse package name
     string(REGEX MATCH "^[a-zA-Z0-9.]*/" PACKAGE_NAME "${LINE}")
     STRING(REGEX REPLACE "/" "" PACKAGE_NAME "${PACKAGE_NAME}")
+
+    # Reset variables
+    set(VERSION_SIMPLE FALSE)
+    set(VERSION_RANGE FALSE)
+    set(VERSION_MIN FALSE)
 
     if("${LINE}" MATCHES "\[[0-9.]*,[0-9.]*\]")
 
@@ -37,18 +45,26 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
         STRING(REGEX REPLACE "," "" PACKAGE_VERSION_MAX "${PACKAGE_VERSION_MAX}")
         STRING(REGEX REPLACE "\]" "" PACKAGE_VERSION_MAX "${PACKAGE_VERSION_MAX}")
 
-        if(${CMAKE_VERSION} VERSION_LESS "3.19.0")
-            message(WARNING "Wrong CMake version to use version range, will disable version check for cmake")
+        set(VERSION_RANGE TRUE)
 
-            # Disable version check for cmake
-            set(PACKAGE_VERSION "")
-        endif()
+    elseif("${LINE}" MATCHES "\[[0-9.]*\]")
+
+        # Parse package version min
+        string(REGEX MATCH "\[[0-9.]*\]" PACKAGE_VERSION_MIN "${LINE}")
+        STRING(REGEX REPLACE "\\[" "" PACKAGE_VERSION_MIN "${PACKAGE_VERSION_MIN}")
+        STRING(REGEX REPLACE "\]" "" PACKAGE_VERSION_MIN "${PACKAGE_VERSION_MIN}")
+
+        set(VERSION_MIN TRUE)
+
     else()
 
         # Parse package version
         string(REGEX MATCH "/[0-9.]*(@|$)" PACKAGE_VERSION "${LINE}")
         STRING(REGEX REPLACE "/" "" PACKAGE_VERSION "${PACKAGE_VERSION}")
         STRING(REGEX REPLACE "@" "" PACKAGE_VERSION "${PACKAGE_VERSION}")
+
+        set(VERSION_SIMPLE TRUE)
+
     endif()
 
     # Parse package repository (conan)
@@ -56,26 +72,86 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
     STRING(REGEX REPLACE "@" "" PACKAGE_REPOSITORY "${PACKAGE_REPOSITORY}")
     STRING(REGEX REPLACE ";" "" PACKAGE_REPOSITORY "${PACKAGE_REPOSITORY}")
 
+    # By default, conan will not handle
+    set(CONAN_WILL_HANDLE FALSE)
+
     # Check for system
-    if(DEFINED PACKAGE_VERSION)
-        find_package(${PACKAGE_NAME} ${PACKAGE_VERSION} QUIET)
-    else()
-        find_package(${PACKAGE_NAME} ${PACKAGE_VERSION_MIN}...${PACKAGE_VERSION_MAX} QUIET)
-    endif()
+    find_package(${PACKAGE_NAME} QUIET)
 
     # Check if package found on system
     if(${${PACKAGE_NAME}_FOUND})
         message(STATUS "${PACKAGE_NAME} found in system")
 
-        # The system handle the package
-        include_directories(${PACKAGE_NAME}_INCLUDE_DIRS)
-        link_libraries(${PACKAGE_NAME}_LIBRARIES)
+        if(NOT DEFINED ${${PACKAGE_NAME}_VERSION})
+            message(STATUS "${PACKAGE_NAME} on system don't have proper version number.")
+            set(CONAN_WILL_HANDLE TRUE)
+        endif()
+
+        set(PACKAGE_VERSION_MATCH FALSE)
+
+        if(VERSION_SIMPLE) # Version only
+
+            # Check if the version is equal to the defined version
+            if(${${PACKAGE_NAME}_VERSION} VERSION_EQUAL ${PACKAGE_VERSION})
+                set(PACKAGE_VERSION_MATCH TRUE)
+            endif()
+
+        elseif(VERSION_RANGE) # Min and max version
+
+            # Check if the version inside the min and max version interval
+            if(${${PACKAGE_NAME}_VERSION} VERSION_LESS_EQUAL ${PACKAGE_VERSION_MAX} AND ${${PACKAGE_NAME}_VERSION} VERSION_GREATER_EQUAL ${PACKAGE_VERSION_MIN})
+                set(PACKAGE_VERSION_MATCH TRUE)
+            endif()
+
+        else() # Min version
+
+            # Check if the version is greater or equal than the defined min version
+            if(${${PACKAGE_NAME}_VERSION} VERSION_GREATER_EQUAL ${PACKAGE_VERSION_MIN})
+                set(PACKAGE_VERSION_MATCH TRUE)
+            endif()
+
+        endif()
+
+        # Check if the version match
+        if(PACKAGE_VERSION_MATCH)
+            message(STATUS "${PACKAGE_NAME} on system match version needs.")
+
+            # The system handle the package
+            include_directories(${PACKAGE_NAME}_INCLUDE_DIRS)
+            link_libraries(${PACKAGE_NAME}_LIBRARIES)
+
+        else()
+            message(STATUS "${PACKAGE_NAME} on system don't match version needs.")
+            set(CONAN_WILL_HANDLE TRUE)
+        endif()
+
     else()
         message(STATUS "${PACKAGE_NAME} not found in system")
+        set(CONAN_WILL_HANDLE TRUE)
+    endif()
 
-        # Conan will handle
-        STRING(REGEX REPLACE "\\[.*\\]" "[>=${PACKAGE_VERSION_MIN} <=${PACKAGE_VERSION_MAX}]" LINE "${LINE}")
+    # Conan will handle
+    if(CONAN_WILL_HANDLE)
+
+        if(VERSION_SIMPLE) # Version only
+
+            STRING(REGEX REPLACE "\\[.*\\]" "${PACKAGE_VERSION}" LINE "${LINE}")
+
+        elseif(VERSION_RANGE) # Min and max version
+
+            STRING(REGEX REPLACE "\\[.*\\]" "[>=${PACKAGE_VERSION_MIN} <=${PACKAGE_VERSION_MAX}]" LINE "${LINE}")
+
+        else() # Min version
+
+            STRING(REGEX REPLACE "\\[.*\\]" "[>=${PACKAGE_VERSION_MIN}]" LINE "${LINE}")
+
+        endif()
+
+        # Happen list
         list(APPEND CONAN_DEPENDENCIES "${LINE}")
+
+        message(STATUS "Version : ${LINE}")
+
     endif()
 
 endforeach()
