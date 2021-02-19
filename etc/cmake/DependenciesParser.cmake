@@ -163,7 +163,7 @@ if(DEFINED CONAN_DEPENDENCIES)
     # Transform the list
     STRING(REGEX REPLACE ";" "\n" CONAN_DEPENDENCIES "${CONAN_DEPENDENCIES}")
 
-    message(STATUS "${CONAN_DEPENDENCIES}")
+    message(STATUS "Conan dependencies:\n${CONAN_DEPENDENCIES}")
 
     # Download Conan automatically, you can also just copy the conan.cmake file
     if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
@@ -180,8 +180,16 @@ if(DEFINED CONAN_DEPENDENCIES)
             URL https://api.bintray.com/conan/bincrafters/public-conan
             VERIFY_SSL True)
 
+    # Replace Conan options separators with new line
+    STRING(REGEX REPLACE " " "\n" CONAN_OPTIONS "${CONAN_OPTIONS}")
+    STRING(REGEX REPLACE ";" "\n" CONAN_OPTIONS "${CONAN_OPTIONS}")
+    STRING(REGEX REPLACE "\n\n" "\n" CONAN_OPTIONS "${CONAN_OPTIONS}")
+
+    message(STATUS "Conan options:\n${CONAN_OPTIONS}")
+
     # Conan setup
     conan_cmake_run(REQUIRES ${CONAN_DEPENDENCIES}
+                    OPTIONS ${CONAN_OPTIONS}
                     BASIC_SETUP
                     GENERATORS cmake
                     IMPORTS "bin, *.dll -> ./bin"

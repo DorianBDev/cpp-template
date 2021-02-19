@@ -17,6 +17,11 @@ set(CMAKE_CXX_STANDARD 17)
 #
 set(PROJECT_TYPE "exe")
 
+#
+# Add Conan options (for multiple options, use ';' or ' ' to separate each)
+#
+list(APPEND CONAN_OPTIONS "")
+
 
 ############################################################################
 ####################### Project linters config #############################
@@ -25,22 +30,22 @@ set(PROJECT_TYPE "exe")
 #
 # Uncomment (or use command line) to enable/disable clang-format project wide tools (clang-format check and fix on whole projet) (not recommended)
 #
-#set(PROJECT_FORMAT_TOOLS "")
+#set(PROJECT_FORMAT_TOOLS TRUE)
 
 #
 # Uncomment (or use command line) to enable/disable clang-tidy check/fix on modified code (not recommended)
 #
-#set(MODIFIED_CODE_TOOLS "")
+#set(MODIFIED_CODE_TOOLS TRUE)
 
 #
 # Uncomment (or use command line) to enable clang-tidy project wide automatic fixes (not recommended)
 #
-#set(CODE_FIX_TOOLS "")
+#set(CODE_FIX_TOOLS TRUE)
 
 #
 # Uncomment (or use command line) to disable all linters targets.
 #
-#set(DISABLE_LINTERS "")
+#set(DISABLE_LINTERS TRUE)
 
 
 ############################################################################
