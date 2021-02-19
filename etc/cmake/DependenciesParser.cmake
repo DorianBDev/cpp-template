@@ -1,3 +1,13 @@
+# Print system dependencies check status
+if(DEFINED DISABLE_SYSTEM_DEPENDENCIES)
+    message(STATUS "No check for dependencies on the system")
+endif()
+
+# Print conan status
+if(DEFINED DISABLE_CONAN_DEPENDENCIES)
+    message(STATUS "Conan is disabled")
+endif()
+
 # Read dependencies file
 file(READ "${PROJECT_SOURCE_DIR}/DEPENDENCIES" DEPENDENCIES_FILE_CONTENT)
 
@@ -75,58 +85,83 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
     # By default, conan will not handle
     set(CONAN_WILL_HANDLE FALSE)
 
-    # Check for system
-    find_package(${PACKAGE_NAME} QUIET)
+    # System dependencies check
+    if(NOT DEFINED DISABLE_SYSTEM_DEPENDENCIES)
 
-    # Check if package found on system
-    if(${${PACKAGE_NAME}_FOUND})
-        message(STATUS "${PACKAGE_NAME} found in system")
+        # Check for dependencies on the system
+        find_package(${PACKAGE_NAME} QUIET)
 
-        if(NOT DEFINED ${${PACKAGE_NAME}_VERSION})
-            message(STATUS "${PACKAGE_NAME} on system don't have proper version number.")
-            set(CONAN_WILL_HANDLE TRUE)
-        endif()
+        # Check if package found on the system
+        if(${${PACKAGE_NAME}_FOUND})
+            message(STATUS "${PACKAGE_NAME} found on the system")
 
-        set(PACKAGE_VERSION_MATCH FALSE)
-
-        if(VERSION_SIMPLE) # Version only
-
-            # Check if the version is equal to the defined version
-            if(${${PACKAGE_NAME}_VERSION} VERSION_EQUAL ${PACKAGE_VERSION})
-                set(PACKAGE_VERSION_MATCH TRUE)
+            if(NOT DEFINED ${${PACKAGE_NAME}_VERSION})
+                message(STATUS "${PACKAGE_NAME} on the system don't have proper version number.")
+                set(CONAN_WILL_HANDLE TRUE)
             endif()
 
-        elseif(VERSION_RANGE) # Min and max version
+            set(PACKAGE_VERSION_MATCH FALSE)
 
-            # Check if the version inside the min and max version interval
-            if(${${PACKAGE_NAME}_VERSION} VERSION_LESS_EQUAL ${PACKAGE_VERSION_MAX} AND ${${PACKAGE_NAME}_VERSION} VERSION_GREATER_EQUAL ${PACKAGE_VERSION_MIN})
-                set(PACKAGE_VERSION_MATCH TRUE)
+            if(VERSION_SIMPLE) # Version only
+
+                # Check if the version is equal to the defined version
+                if(${${PACKAGE_NAME}_VERSION} VERSION_EQUAL ${PACKAGE_VERSION})
+                    set(PACKAGE_VERSION_MATCH TRUE)
+                endif()
+
+            elseif(VERSION_RANGE) # Min and max version
+
+                # Check if the version inside the min and max version interval
+                if(${${PACKAGE_NAME}_VERSION} VERSION_LESS_EQUAL ${PACKAGE_VERSION_MAX} AND ${${PACKAGE_NAME}_VERSION} VERSION_GREATER_EQUAL ${PACKAGE_VERSION_MIN})
+                    set(PACKAGE_VERSION_MATCH TRUE)
+                endif()
+
+            else() # Min version
+
+                # Check if the version is greater or equal than the defined min version
+                if(${${PACKAGE_NAME}_VERSION} VERSION_GREATER_EQUAL ${PACKAGE_VERSION_MIN})
+                    set(PACKAGE_VERSION_MATCH TRUE)
+                endif()
+
             endif()
 
-        else() # Min version
+            # Check if the version match
+            if(PACKAGE_VERSION_MATCH)
+                message(STATUS "${PACKAGE_NAME} on the system match version needs.")
 
-            # Check if the version is greater or equal than the defined min version
-            if(${${PACKAGE_NAME}_VERSION} VERSION_GREATER_EQUAL ${PACKAGE_VERSION_MIN})
-                set(PACKAGE_VERSION_MATCH TRUE)
+                # The system handle the package
+                include_directories(${PACKAGE_NAME}_INCLUDE_DIRS)
+                link_libraries(${PACKAGE_NAME}_LIBRARIES)
+
+            else()
+
+                # Warning message (or not, if conan is available)
+                if(NOT DEFINED DISABLE_CONAN_DEPENDENCIES)
+                    message(STATUS "${PACKAGE_NAME} on the system don't match version needs.")
+                else()
+                    message(WARNING "${PACKAGE_NAME} on the system don't match version needs and Conan is disabled.")
+                endif()
+
+                # Conan will handle this
+                set(CONAN_WILL_HANDLE TRUE)
+
             endif()
-
-        endif()
-
-        # Check if the version match
-        if(PACKAGE_VERSION_MATCH)
-            message(STATUS "${PACKAGE_NAME} on system match version needs.")
-
-            # The system handle the package
-            include_directories(${PACKAGE_NAME}_INCLUDE_DIRS)
-            link_libraries(${PACKAGE_NAME}_LIBRARIES)
 
         else()
-            message(STATUS "${PACKAGE_NAME} on system don't match version needs.")
+
+            # Warning message (or not, if conan is available)
+            if(NOT DEFINED DISABLE_CONAN_DEPENDENCIES)
+                message(STATUS "${PACKAGE_NAME} not found on the system.")
+            else()
+                message(WARNING "${PACKAGE_NAME} not found on the system and Conan is disabled.")
+            endif()
+
+            # Conan will handle this
             set(CONAN_WILL_HANDLE TRUE)
+
         endif()
 
     else()
-        message(STATUS "${PACKAGE_NAME} not found in system")
         set(CONAN_WILL_HANDLE TRUE)
     endif()
 
@@ -150,7 +185,10 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
         # Happen list
         list(APPEND CONAN_DEPENDENCIES "${LINE}")
 
-        message(STATUS "Version : ${LINE}")
+        # Print information
+        if (NOT DEFINED DISABLE_CONAN_DEPENDENCIES)
+            message(STATUS "Conan will handle: ${LINE}")
+        endif()
 
     endif()
 
@@ -158,53 +196,62 @@ endforeach()
 
 # Conan
 if(DEFINED CONAN_DEPENDENCIES)
-    list(TRANSFORM CONAN_DEPENDENCIES TOLOWER)
 
-    # Transform the list
-    STRING(REGEX REPLACE ";" "\n" CONAN_DEPENDENCIES "${CONAN_DEPENDENCIES}")
+    # If conan is enabled
+    if(NOT DEFINED DISABLE_CONAN_DEPENDENCIES)
 
-    message(STATUS "Conan dependencies:\n${CONAN_DEPENDENCIES}")
+        # Convert packages to lowercase
+        list(TRANSFORM CONAN_DEPENDENCIES TOLOWER)
 
-    # Download Conan automatically, you can also just copy the conan.cmake file
-    if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
-        message(STATUS "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
-        file(DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/master/conan.cmake" "${CMAKE_BINARY_DIR}/conan.cmake")
-    endif()
+        # Transform the list
+        STRING(REGEX REPLACE ";" "\n" CONAN_DEPENDENCIES "${CONAN_DEPENDENCIES}")
 
-    # Include conan cmake script
-    include(${CMAKE_BINARY_DIR}/conan.cmake)
+        message(STATUS "Conan dependencies:\n${CONAN_DEPENDENCIES}")
 
-    # Add 'bincrafters' repository
-    conan_add_remote(NAME bincrafters
-            INDEX 1
-            URL https://api.bintray.com/conan/bincrafters/public-conan
-            VERIFY_SSL True)
+        # Download Conan automatically, you can also just copy the conan.cmake file
+        if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
+            message(STATUS "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
+            file(DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/master/conan.cmake" "${CMAKE_BINARY_DIR}/conan.cmake")
+        endif()
 
-    # Replace Conan options separators with new line
-    STRING(REGEX REPLACE " " "\n" CONAN_OPTIONS "${CONAN_OPTIONS}")
-    STRING(REGEX REPLACE ";" "\n" CONAN_OPTIONS "${CONAN_OPTIONS}")
-    STRING(REGEX REPLACE "\n\n" "\n" CONAN_OPTIONS "${CONAN_OPTIONS}")
+        # Include conan cmake script
+        include(${CMAKE_BINARY_DIR}/conan.cmake)
 
-    message(STATUS "Conan options:\n${CONAN_OPTIONS}")
+        # Add 'bincrafters' repository
+        conan_add_remote(NAME bincrafters
+                         INDEX 1
+                         URL https://api.bintray.com/conan/bincrafters/public-conan
+                         VERIFY_SSL True)
 
-    # Conan setup
-    conan_cmake_run(REQUIRES ${CONAN_DEPENDENCIES}
-                    OPTIONS ${CONAN_OPTIONS}
-                    BASIC_SETUP
-                    GENERATORS cmake
-                    IMPORTS "bin, *.dll -> ./bin"
-                    IMPORTS "lib, *.dylib* -> ./bin"
-                    IMPORTS "lib, *.so* -> ./bin"
-                    BUILD missing)
+        # Replace Conan options separators with new line
+        STRING(REGEX REPLACE " " "\n" CONAN_OPTIONS "${CONAN_OPTIONS}")
+        STRING(REGEX REPLACE ";" "\n" CONAN_OPTIONS "${CONAN_OPTIONS}")
+        STRING(REGEX REPLACE "\n\n" "\n" CONAN_OPTIONS "${CONAN_OPTIONS}")
 
-    # Check if Conan exist
-    if(NOT EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-        message(WARNING "You need to install Conan first https://conan.io/.")
+        message(STATUS "Conan options:\n${CONAN_OPTIONS}")
+
+        # Conan setup
+        conan_cmake_run(REQUIRES ${CONAN_DEPENDENCIES}
+                        OPTIONS ${CONAN_OPTIONS}
+                        BASIC_SETUP
+                        GENERATORS cmake
+                        IMPORTS "bin, *.dll -> ./bin"
+                        IMPORTS "lib, *.dylib* -> ./bin"
+                        IMPORTS "lib, *.so* -> ./bin"
+                        BUILD missing)
+
+        # Check if Conan exist
+        if(NOT EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+            message(WARNING "You need to install Conan first https://conan.io/.")
+        else()
+            include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+            conan_basic_setup()
+        endif()
+
+        # Link dependencies to all targets
+        link_libraries(${CONAN_LIBS})
+
     else()
-        include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-        conan_basic_setup()
+        message(FATAL_ERROR "Conan is disabled but some packages aren't available on the system.")
     endif()
-
-    # Link dependencies to all targets
-    link_libraries(${CONAN_LIBS})
 endif()

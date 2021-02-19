@@ -24,6 +24,21 @@ list(APPEND CONAN_OPTIONS "")
 
 
 ############################################################################
+##################### Project dependencies config ##########################
+############################################################################
+
+#
+# Uncomment (or use command line) to enable/disable check for dependencies on the system (only use Conan)
+#
+#set(DISABLE_SYSTEM_DEPENDENCIES TRUE)
+
+#
+# Uncomment (or use command line) to enable/disable Conan (only use dependencies on the system)
+#
+#set(DISABLE_CONAN_DEPENDENCIES TRUE)
+
+
+############################################################################
 ####################### Project linters config #############################
 ############################################################################
 
