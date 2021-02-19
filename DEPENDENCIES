@@ -10,6 +10,9 @@
 #                                                                     #
 # Package names are case sensitive, see cmake find_package()          #
 #                                                                     #
+# You can also add a FindXXX.cmake file in the etc/cmake directory if #
+# the package finder script is not present in cmake by default        #
+#                                                                     #
 #######################################################################
 
 SFML/2.5.1@bincrafters/stable

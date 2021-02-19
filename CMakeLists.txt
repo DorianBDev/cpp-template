@@ -120,6 +120,11 @@ endif()
 ############################################################################
 
 #
+# Add other FindXXX.cmake file to the cmake module path
+#
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/etc/cmake/")
+
+#
 # Include the dependencies parser
 #
 include(${CMAKE_CURRENT_SOURCE_DIR}/etc/cmake/DependenciesParser.cmake)
@@ -308,7 +313,7 @@ endif()
 #
 # Check if python is available
 #
-find_package (Python COMPONENTS Interpreter)
+find_package(Python COMPONENTS Interpreter)
 
 #
 # Check if clang-tidy and clang-format are available
