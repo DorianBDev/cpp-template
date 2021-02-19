@@ -3,6 +3,7 @@ build/*
 .idea/
 
 src/Version.h
+src/Config.h
 
 doc/build/*
 !doc/build/.keepme

@@ -65,6 +65,9 @@ endif()
 # Configure version file
 configure_file("${PROJECT_SOURCE_DIR}/etc/config/Version.config" "${PROJECT_SOURCE_DIR}/src/Version.h")
 
+# Configure config file
+configure_file("${PROJECT_SOURCE_DIR}/etc/config/Config.config" "${PROJECT_SOURCE_DIR}/src/Config.h")
+
 # Configure doxyfile
 configure_file("${PROJECT_SOURCE_DIR}/doc/config/Doxyfile.config" "${PROJECT_SOURCE_DIR}/doc/config/DoxyFile")
 
