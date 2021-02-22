@@ -52,6 +52,18 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
         string(REGEX REPLACE "\\?" "" LINE "${LINE}")
     endif()
 
+    # Set default values for disabled version check
+    set(PACKAGE_NO_VERSION_CHECK FALSE)
+
+    # Parse no version check
+    if(LINE MATCHES "^~.*")
+        set(PACKAGE_SYSTEM_ONLY TRUE)
+        set(PACKAGE_CONAN_ONLY FALSE)
+        set(PACKAGE_NO_VERSION_CHECK TRUE)
+        message(STATUS "${LINE}: System only and no version check")
+        string(REGEX REPLACE "~" "" LINE "${LINE}")
+    endif()
+
     # Set default values for package shared option
     set(PACKAGE_FORCE_SHARED FALSE)
 
@@ -135,27 +147,31 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
 
             set(PACKAGE_VERSION_MATCH FALSE)
 
-            if(VERSION_SIMPLE) # Version only
+            if(NOT PACKAGE_NO_VERSION_CHECK)
+                if(VERSION_SIMPLE) # Version only
 
-                # Check if the version is equal to the defined version
-                if(${${PACKAGE_NAME}_VERSION} VERSION_EQUAL ${PACKAGE_VERSION})
-                    set(PACKAGE_VERSION_MATCH TRUE)
+                    # Check if the version is equal to the defined version
+                    if(${${PACKAGE_NAME}_VERSION} VERSION_EQUAL ${PACKAGE_VERSION})
+                        set(PACKAGE_VERSION_MATCH TRUE)
+                    endif()
+
+                elseif(VERSION_RANGE) # Min and max version
+
+                    # Check if the version inside the min and max version interval
+                    if(${${PACKAGE_NAME}_VERSION} VERSION_LESS_EQUAL ${PACKAGE_VERSION_MAX} AND ${${PACKAGE_NAME}_VERSION} VERSION_GREATER_EQUAL ${PACKAGE_VERSION_MIN})
+                        set(PACKAGE_VERSION_MATCH TRUE)
+                    endif()
+
+                else() # Min version
+
+                    # Check if the version is greater or equal than the defined min version
+                    if(${${PACKAGE_NAME}_VERSION} VERSION_GREATER_EQUAL ${PACKAGE_VERSION_MIN})
+                        set(PACKAGE_VERSION_MATCH TRUE)
+                    endif()
+
                 endif()
-
-            elseif(VERSION_RANGE) # Min and max version
-
-                # Check if the version inside the min and max version interval
-                if(${${PACKAGE_NAME}_VERSION} VERSION_LESS_EQUAL ${PACKAGE_VERSION_MAX} AND ${${PACKAGE_NAME}_VERSION} VERSION_GREATER_EQUAL ${PACKAGE_VERSION_MIN})
-                    set(PACKAGE_VERSION_MATCH TRUE)
-                endif()
-
-            else() # Min version
-
-                # Check if the version is greater or equal than the defined min version
-                if(${${PACKAGE_NAME}_VERSION} VERSION_GREATER_EQUAL ${PACKAGE_VERSION_MIN})
-                    set(PACKAGE_VERSION_MATCH TRUE)
-                endif()
-
+            else()
+                set(PACKAGE_VERSION_MATCH TRUE)
             endif()
 
             # Check if the version match

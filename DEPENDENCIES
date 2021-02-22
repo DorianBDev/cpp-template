@@ -12,8 +12,10 @@
 #### - "?pack/version"                                                   ####
 #### - "pack/version{list,of,component}$"                                ####
 #### - "!pack/version@conanRepository{list,of,component}$"               ####
+#### - "~pack/version@conanRepository{list,of,component}$"               ####
 ####                                                                     ####
 #### "!pack/version" -> System search only                               ####
+#### "~pack/version" -> System search only with no version check         ####
 #### "?pack/version" -> Conan search only                                ####
 #### "pack/version$" -> Shared                                           ####
 ####                                                                     ####
@@ -25,6 +27,6 @@
 #############################################################################
 #############################################################################
 
-!SFML/2.5.1@bincrafters/stable
+~SFML/2.5.1@bincrafters/stable
 ?SDL2/[2.0.12]@bincrafters/stable
 OpenCV/[4.1.2,4.5.1]$
