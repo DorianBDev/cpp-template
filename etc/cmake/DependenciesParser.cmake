@@ -52,6 +52,16 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
         string(REGEX REPLACE "\\?" "" LINE "${LINE}")
     endif()
 
+    # Set default values for package shared option
+    set(PACKAGE_FORCE_SHARED FALSE)
+
+    # Parse package shared option
+    if(LINE MATCHES ".*\\$$")
+        set(PACKAGE_FORCE_SHARED TRUE)
+        message(STATUS "${LINE}: Shared package")
+        string(REGEX REPLACE "\\$" "" LINE "${LINE}")
+    endif()
+
     # Parse package name
     string(REGEX MATCH "^[a-zA-Z0-9.]*/" PACKAGE_NAME "${LINE}")
     string(REGEX REPLACE "/" "" PACKAGE_NAME "${PACKAGE_NAME}")
@@ -105,6 +115,11 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
 
     # System dependencies check
     if(NOT DEFINED DISABLE_SYSTEM_DEPENDENCIES AND NOT PACKAGE_CONAN_ONLY)
+
+        # If shared package, try to force it
+        if(PACKAGE_FORCE_SHARED)
+            set(${PACKAGE_NAME}_USE_STATIC_LIBS ON)
+        endif()
 
         # Check for dependencies on the system
         find_package(${PACKAGE_NAME} QUIET)
@@ -186,6 +201,9 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
     # Conan will handle
     if(CONAN_WILL_HANDLE AND NOT PACKAGE_SYSTEM_ONLY)
 
+        # Convert package name to lowercase
+        list(TRANSFORM PACKAGE_NAME TOLOWER)
+
         if(VERSION_SIMPLE) # Version only
 
             string(REGEX REPLACE "\\[.*\\]" "${PACKAGE_VERSION}" LINE "${LINE}")
@@ -202,6 +220,11 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
 
         # Happen list
         list(APPEND CONAN_DEPENDENCIES "${LINE}")
+
+        # If shared package, try to force it
+        if(PACKAGE_FORCE_SHARED)
+            list(APPEND CONAN_OPTIONS "${PACKAGE_NAME}:shared=True")
+        endif()
 
         # Print information
         if (NOT DEFINED DISABLE_CONAN_DEPENDENCIES)
