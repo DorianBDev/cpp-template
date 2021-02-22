@@ -1,20 +1,30 @@
-#######################################################################
-####################### Add you dependencies here #####################
-#######################################################################
-#                                                                     #
-# Format:                                                             #
-# - "pack/version" for both (system search first, if not found conan) #
-# - "pack/[versionMin,versionMax]"                                    #
-# - "pack/[versionMin]"                                               #
-# - "pack/version@conanRepository"                                    #
-#                                                                     #
-# Package names are case sensitive, see cmake find_package()          #
-#                                                                     #
-# You can also add a FindXXX.cmake file in the etc/cmake directory if #
-# the package finder script is not present in cmake by default        #
-#                                                                     #
-#######################################################################
+#############################################################################
+######################### Add your dependencies here ########################
+#############################################################################
+####                                                                     ####
+#### Format:                                                             ####
+#### - "pack/version" for both (system search first, if not found conan) ####
+#### - "pack/[versionMin,versionMax]"                                    ####
+#### - "pack/[versionMin]"                                               ####
+#### - "pack/version@conanRepository"                                    ####
+#### - "pack/version{list,of,component}"                                 ####
+#### - "!pack/version@conanRepository"                                   ####
+#### - "?pack/version"                                                   ####
+#### - "pack/version{list,of,component}$"                                ####
+#### - "!pack/version@conanRepository{list,of,component}$"               ####
+####                                                                     ####
+#### "!pack/version" -> System search only                               ####
+#### "?pack/version" -> Conan search only                                ####
+#### "pack/version$" -> Shared                                           ####
+####                                                                     ####
+#### Package names are case sensitive, see cmake find_package()          ####
+####                                                                     ####
+#### You can also add a FindXXX.cmake file in the etc/cmake directory if ####
+#### the package finder script is not present in cmake by default        ####
+####                                                                     ####
+#############################################################################
+#############################################################################
 
-SFML/2.5.1@bincrafters/stable
-SDL2/[2.0.12]@bincrafters/stable
+!SFML/2.5.1@bincrafters/stable
+?SDL2/[2.0.12]@bincrafters/stable
 OpenCV/[4.1.2,4.5.1]

@@ -12,10 +12,10 @@ endif()
 file(READ "${PROJECT_SOURCE_DIR}/DEPENDENCIES" DEPENDENCIES_FILE_CONTENT)
 
 # Create the list
-STRING(REGEX REPLACE "\n" ";" DEPENDENCIES_FILE_CONTENT "${DEPENDENCIES_FILE_CONTENT}")
+string(REGEX REPLACE "\n" ";" DEPENDENCIES_FILE_CONTENT "${DEPENDENCIES_FILE_CONTENT}")
 
 # Clear empty list entries
-STRING(REGEX REPLACE ";;" ";" DEPENDENCIES_FILE_CONTENT "${DEPENDENCIES_FILE_CONTENT}")
+string(REGEX REPLACE ";;" ";" DEPENDENCIES_FILE_CONTENT "${DEPENDENCIES_FILE_CONTENT}")
 
 # Remove lines that start with a '#'
 foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
@@ -26,17 +26,35 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
 endforeach()
 
 # Clear empty list entries
-STRING(REGEX REPLACE ";;" ";" DEPENDENCIES_FILE_CONTENT "${DEPENDENCIES_FILE_CONTENT}")
+string(REGEX REPLACE ";;" ";" DEPENDENCIES_FILE_CONTENT "${DEPENDENCIES_FILE_CONTENT}")
 
 # Parse dependencies
 foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
 
     # Remove any space in the line
-    STRING(REGEX REPLACE " " "" LINE "${LINE}")
+    string(REGEX REPLACE " " "" LINE "${LINE}")
+
+    # Set default values for start options (system only or conan only)
+    set(PACKAGE_SYSTEM_ONLY FALSE)
+    set(PACKAGE_CONAN_ONLY FALSE)
+
+    # System only
+    if(LINE MATCHES "^!.*")
+        set(PACKAGE_SYSTEM_ONLY TRUE)
+        message(STATUS "${LINE}: System only")
+        string(REGEX REPLACE "!" "" LINE "${LINE}")
+    endif()
+
+    # Conan only
+    if(LINE MATCHES "^\\?.*")
+        set(PACKAGE_CONAN_ONLY TRUE)
+        message(STATUS "${LINE}: Conan only")
+        string(REGEX REPLACE "\\?" "" LINE "${LINE}")
+    endif()
 
     # Parse package name
     string(REGEX MATCH "^[a-zA-Z0-9.]*/" PACKAGE_NAME "${LINE}")
-    STRING(REGEX REPLACE "/" "" PACKAGE_NAME "${PACKAGE_NAME}")
+    string(REGEX REPLACE "/" "" PACKAGE_NAME "${PACKAGE_NAME}")
 
     # Reset variables
     set(VERSION_SIMPLE FALSE)
@@ -47,13 +65,13 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
 
         # Parse package version min
         string(REGEX MATCH "\[[0-9.]*," PACKAGE_VERSION_MIN "${LINE}")
-        STRING(REGEX REPLACE "\\[" "" PACKAGE_VERSION_MIN "${PACKAGE_VERSION_MIN}")
-        STRING(REGEX REPLACE "," "" PACKAGE_VERSION_MIN "${PACKAGE_VERSION_MIN}")
+        string(REGEX REPLACE "\\[" "" PACKAGE_VERSION_MIN "${PACKAGE_VERSION_MIN}")
+        string(REGEX REPLACE "," "" PACKAGE_VERSION_MIN "${PACKAGE_VERSION_MIN}")
 
         # Parse package version max
         string(REGEX MATCH ",[0-9.]*\]" PACKAGE_VERSION_MAX "${LINE}")
-        STRING(REGEX REPLACE "," "" PACKAGE_VERSION_MAX "${PACKAGE_VERSION_MAX}")
-        STRING(REGEX REPLACE "\]" "" PACKAGE_VERSION_MAX "${PACKAGE_VERSION_MAX}")
+        string(REGEX REPLACE "," "" PACKAGE_VERSION_MAX "${PACKAGE_VERSION_MAX}")
+        string(REGEX REPLACE "\]" "" PACKAGE_VERSION_MAX "${PACKAGE_VERSION_MAX}")
 
         set(VERSION_RANGE TRUE)
 
@@ -61,8 +79,8 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
 
         # Parse package version min
         string(REGEX MATCH "\[[0-9.]*\]" PACKAGE_VERSION_MIN "${LINE}")
-        STRING(REGEX REPLACE "\\[" "" PACKAGE_VERSION_MIN "${PACKAGE_VERSION_MIN}")
-        STRING(REGEX REPLACE "\]" "" PACKAGE_VERSION_MIN "${PACKAGE_VERSION_MIN}")
+        string(REGEX REPLACE "\\[" "" PACKAGE_VERSION_MIN "${PACKAGE_VERSION_MIN}")
+        string(REGEX REPLACE "\]" "" PACKAGE_VERSION_MIN "${PACKAGE_VERSION_MIN}")
 
         set(VERSION_MIN TRUE)
 
@@ -70,8 +88,8 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
 
         # Parse package version
         string(REGEX MATCH "/[0-9.]*(@|$)" PACKAGE_VERSION "${LINE}")
-        STRING(REGEX REPLACE "/" "" PACKAGE_VERSION "${PACKAGE_VERSION}")
-        STRING(REGEX REPLACE "@" "" PACKAGE_VERSION "${PACKAGE_VERSION}")
+        string(REGEX REPLACE "/" "" PACKAGE_VERSION "${PACKAGE_VERSION}")
+        string(REGEX REPLACE "@" "" PACKAGE_VERSION "${PACKAGE_VERSION}")
 
         set(VERSION_SIMPLE TRUE)
 
@@ -79,14 +97,14 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
 
     # Parse package repository (conan)
     string(REGEX MATCH "@.*$" PACKAGE_REPOSITORY "${LINE}")
-    STRING(REGEX REPLACE "@" "" PACKAGE_REPOSITORY "${PACKAGE_REPOSITORY}")
-    STRING(REGEX REPLACE ";" "" PACKAGE_REPOSITORY "${PACKAGE_REPOSITORY}")
+    string(REGEX REPLACE "@" "" PACKAGE_REPOSITORY "${PACKAGE_REPOSITORY}")
+    string(REGEX REPLACE ";" "" PACKAGE_REPOSITORY "${PACKAGE_REPOSITORY}")
 
     # By default, conan will not handle
     set(CONAN_WILL_HANDLE FALSE)
 
     # System dependencies check
-    if(NOT DEFINED DISABLE_SYSTEM_DEPENDENCIES)
+    if(NOT DEFINED DISABLE_SYSTEM_DEPENDENCIES AND NOT PACKAGE_CONAN_ONLY)
 
         # Check for dependencies on the system
         find_package(${PACKAGE_NAME} QUIET)
@@ -166,19 +184,19 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
     endif()
 
     # Conan will handle
-    if(CONAN_WILL_HANDLE)
+    if(CONAN_WILL_HANDLE AND NOT PACKAGE_SYSTEM_ONLY)
 
         if(VERSION_SIMPLE) # Version only
 
-            STRING(REGEX REPLACE "\\[.*\\]" "${PACKAGE_VERSION}" LINE "${LINE}")
+            string(REGEX REPLACE "\\[.*\\]" "${PACKAGE_VERSION}" LINE "${LINE}")
 
         elseif(VERSION_RANGE) # Min and max version
 
-            STRING(REGEX REPLACE "\\[.*\\]" "[>=${PACKAGE_VERSION_MIN} <=${PACKAGE_VERSION_MAX}]" LINE "${LINE}")
+            string(REGEX REPLACE "\\[.*\\]" "[>=${PACKAGE_VERSION_MIN} <=${PACKAGE_VERSION_MAX}]" LINE "${LINE}")
 
         else() # Min version
 
-            STRING(REGEX REPLACE "\\[.*\\]" "[>=${PACKAGE_VERSION_MIN}]" LINE "${LINE}")
+            string(REGEX REPLACE "\\[.*\\]" "[>=${PACKAGE_VERSION_MIN}]" LINE "${LINE}")
 
         endif()
 
@@ -204,7 +222,7 @@ if(DEFINED CONAN_DEPENDENCIES)
         list(TRANSFORM CONAN_DEPENDENCIES TOLOWER)
 
         # Transform the list
-        STRING(REGEX REPLACE ";" "\n" CONAN_DEPENDENCIES "${CONAN_DEPENDENCIES}")
+        string(REGEX REPLACE ";" "\n" CONAN_DEPENDENCIES "${CONAN_DEPENDENCIES}")
 
         message(STATUS "Conan dependencies:\n${CONAN_DEPENDENCIES}")
 
@@ -224,9 +242,9 @@ if(DEFINED CONAN_DEPENDENCIES)
                          VERIFY_SSL True)
 
         # Replace Conan options separators with new line
-        STRING(REGEX REPLACE " " "\n" CONAN_OPTIONS "${CONAN_OPTIONS}")
-        STRING(REGEX REPLACE ";" "\n" CONAN_OPTIONS "${CONAN_OPTIONS}")
-        STRING(REGEX REPLACE "\n\n" "\n" CONAN_OPTIONS "${CONAN_OPTIONS}")
+        string(REGEX REPLACE " " "\n" CONAN_OPTIONS "${CONAN_OPTIONS}")
+        string(REGEX REPLACE ";" "\n" CONAN_OPTIONS "${CONAN_OPTIONS}")
+        string(REGEX REPLACE "\n\n" "\n" CONAN_OPTIONS "${CONAN_OPTIONS}")
 
         message(STATUS "Conan options:\n${CONAN_OPTIONS}")
 
