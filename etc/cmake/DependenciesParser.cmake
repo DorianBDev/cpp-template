@@ -56,11 +56,9 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
     set(PACKAGE_NO_VERSION_CHECK FALSE)
 
     # Parse no version check
-    if(LINE MATCHES "^~.*")
-        set(PACKAGE_SYSTEM_ONLY TRUE)
-        set(PACKAGE_CONAN_ONLY FALSE)
+    if(LINE MATCHES "~.*" OR DEFINED DISABLE_VERSION_CHECK_FOR_SYSTEM)
         set(PACKAGE_NO_VERSION_CHECK TRUE)
-        message(STATUS "${LINE}: System only and no version check")
+        message(STATUS "${LINE}: No version check for system")
         string(REGEX REPLACE "~" "" LINE "${LINE}")
     endif()
 
@@ -185,59 +183,63 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
         if(${${PACKAGE_NAME}_FOUND})
             message(STATUS "${PACKAGE_NAME} found on the system")
 
-            if(NOT DEFINED ${${PACKAGE_NAME}_VERSION})
+            if(NOT DEFINED ${${PACKAGE_NAME}_VERSION} AND NOT PACKAGE_NO_VERSION_CHECK)
+
                 message(STATUS "${PACKAGE_NAME} on the system don't have proper version number.")
                 set(CONAN_WILL_HANDLE TRUE)
-            endif()
-
-            set(PACKAGE_VERSION_MATCH FALSE)
-
-            if(NOT PACKAGE_NO_VERSION_CHECK)
-                if(VERSION_SIMPLE) # Version only
-
-                    # Check if the version is equal to the defined version
-                    if(${${PACKAGE_NAME}_VERSION} VERSION_EQUAL ${PACKAGE_VERSION})
-                        set(PACKAGE_VERSION_MATCH TRUE)
-                    endif()
-
-                elseif(VERSION_RANGE) # Min and max version
-
-                    # Check if the version inside the min and max version interval
-                    if(${${PACKAGE_NAME}_VERSION} VERSION_LESS_EQUAL ${PACKAGE_VERSION_MAX} AND ${${PACKAGE_NAME}_VERSION} VERSION_GREATER_EQUAL ${PACKAGE_VERSION_MIN})
-                        set(PACKAGE_VERSION_MATCH TRUE)
-                    endif()
-
-                else() # Min version
-
-                    # Check if the version is greater or equal than the defined min version
-                    if(${${PACKAGE_NAME}_VERSION} VERSION_GREATER_EQUAL ${PACKAGE_VERSION_MIN})
-                        set(PACKAGE_VERSION_MATCH TRUE)
-                    endif()
-
-                endif()
-            else()
-                set(PACKAGE_VERSION_MATCH TRUE)
-            endif()
-
-            # Check if the version match
-            if(PACKAGE_VERSION_MATCH)
-                message(STATUS "${PACKAGE_NAME} on the system match version needs.")
-
-                # The system handle the package
-                include_directories(${PACKAGE_NAME}_INCLUDE_DIRS)
-                link_libraries(${PACKAGE_NAME}_LIBRARIES)
 
             else()
 
-                # Warning message (or not, if conan is available)
-                if(NOT DEFINED DISABLE_CONAN_DEPENDENCIES)
-                    message(STATUS "${PACKAGE_NAME} on the system don't match version needs.")
+                set(PACKAGE_VERSION_MATCH FALSE)
+
+                if(NOT PACKAGE_NO_VERSION_CHECK)
+                    if(VERSION_SIMPLE) # Version only
+
+                        # Check if the version is equal to the defined version
+                        if(${${PACKAGE_NAME}_VERSION} VERSION_EQUAL ${PACKAGE_VERSION})
+                            set(PACKAGE_VERSION_MATCH TRUE)
+                        endif()
+
+                    elseif(VERSION_RANGE) # Min and max version
+
+                        # Check if the version inside the min and max version interval
+                        if(${${PACKAGE_NAME}_VERSION} VERSION_LESS_EQUAL ${PACKAGE_VERSION_MAX} AND ${${PACKAGE_NAME}_VERSION} VERSION_GREATER_EQUAL ${PACKAGE_VERSION_MIN})
+                            set(PACKAGE_VERSION_MATCH TRUE)
+                        endif()
+
+                    else() # Min version
+
+                        # Check if the version is greater or equal than the defined min version
+                        if(${${PACKAGE_NAME}_VERSION} VERSION_GREATER_EQUAL ${PACKAGE_VERSION_MIN})
+                            set(PACKAGE_VERSION_MATCH TRUE)
+                        endif()
+
+                    endif()
                 else()
-                    message(WARNING "${PACKAGE_NAME} on the system don't match version needs and Conan is disabled.")
+                    set(PACKAGE_VERSION_MATCH TRUE)
                 endif()
 
-                # Conan will handle this
-                set(CONAN_WILL_HANDLE TRUE)
+                # Check if the version match
+                if(PACKAGE_VERSION_MATCH)
+                    message(STATUS "${PACKAGE_NAME} on the system match version needs.")
+
+                    # The system handle the package
+                    include_directories(${PACKAGE_NAME}_INCLUDE_DIRS)
+                    link_libraries(${PACKAGE_NAME}_LIBRARIES)
+
+                else()
+
+                    # Warning message (or not, if conan is available)
+                    if(NOT DEFINED DISABLE_CONAN_DEPENDENCIES)
+                        message(STATUS "${PACKAGE_NAME} on the system don't match version needs.")
+                    else()
+                        message(WARNING "${PACKAGE_NAME} on the system don't match version needs and Conan is disabled.")
+                    endif()
+
+                    # Conan will handle this
+                    set(CONAN_WILL_HANDLE TRUE)
+
+                endif()
 
             endif()
 

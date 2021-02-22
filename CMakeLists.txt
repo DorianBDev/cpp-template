@@ -37,6 +37,11 @@ list(APPEND CONAN_OPTIONS "")
 #
 #set(DISABLE_CONAN_DEPENDENCIES TRUE)
 
+#
+# Uncomment (or use command line) to disable system version check by default
+#
+#set(DISABLE_VERSION_CHECK_FOR_SYSTEM TRUE)
+
 
 ############################################################################
 ####################### Project linters config #############################
