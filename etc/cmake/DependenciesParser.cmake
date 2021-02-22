@@ -52,7 +52,7 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
         string(REGEX REPLACE "\\?" "" LINE "${LINE}")
     endif()
 
-    # Set default values for disabled version check
+    # Set default value for disabled version check
     set(PACKAGE_NO_VERSION_CHECK FALSE)
 
     # Parse no version check
@@ -64,7 +64,7 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
         string(REGEX REPLACE "~" "" LINE "${LINE}")
     endif()
 
-    # Set default values for package shared option
+    # Set default value for package shared option
     set(PACKAGE_FORCE_SHARED FALSE)
 
     # Parse package shared option
@@ -72,6 +72,25 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
         set(PACKAGE_FORCE_SHARED TRUE)
         message(STATUS "${LINE}: Shared package")
         string(REGEX REPLACE "\\$" "" LINE "${LINE}")
+    endif()
+
+    # Set default value for components
+    set(PACKAGE_USE_COMPONENTS FALSE)
+
+    # Parse components
+    if("${LINE}" MATCHES "\\{[a-zA-Z,]*\\}")
+
+        set(PACKAGE_USE_COMPONENTS TRUE)
+
+        string(REGEX MATCH "\\{[a-zA-Z,]*\\}" COMPONENTS "${LINE}")
+        string(REGEX MATCHALL "[a-zA-Z]*(,|})" PACKAGE_COMPONENTS "${COMPONENTS}")
+        string(REGEX REPLACE "\\}" "" PACKAGE_COMPONENTS "${PACKAGE_COMPONENTS}")
+        string(REGEX REPLACE "," "" PACKAGE_COMPONENTS "${PACKAGE_COMPONENTS}")
+
+        string(REGEX REPLACE "\\{.*\\}" "" LINE "${LINE}")
+
+        message(STATUS "Components of ${LINE}: ${PACKAGE_COMPONENTS}")
+
     endif()
 
     # Parse package name
@@ -83,26 +102,26 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
     set(VERSION_RANGE FALSE)
     set(VERSION_MIN FALSE)
 
-    if("${LINE}" MATCHES "\[[0-9.]*,[0-9.]*\]")
+    if("${LINE}" MATCHES "\\[[0-9.]*,[0-9.]*\\]")
 
         # Parse package version min
-        string(REGEX MATCH "\[[0-9.]*," PACKAGE_VERSION_MIN "${LINE}")
+        string(REGEX MATCH "\\[[0-9.]*," PACKAGE_VERSION_MIN "${LINE}")
         string(REGEX REPLACE "\\[" "" PACKAGE_VERSION_MIN "${PACKAGE_VERSION_MIN}")
         string(REGEX REPLACE "," "" PACKAGE_VERSION_MIN "${PACKAGE_VERSION_MIN}")
 
         # Parse package version max
-        string(REGEX MATCH ",[0-9.]*\]" PACKAGE_VERSION_MAX "${LINE}")
+        string(REGEX MATCH ",[0-9.]*\\]" PACKAGE_VERSION_MAX "${LINE}")
         string(REGEX REPLACE "," "" PACKAGE_VERSION_MAX "${PACKAGE_VERSION_MAX}")
-        string(REGEX REPLACE "\]" "" PACKAGE_VERSION_MAX "${PACKAGE_VERSION_MAX}")
+        string(REGEX REPLACE "\\]" "" PACKAGE_VERSION_MAX "${PACKAGE_VERSION_MAX}")
 
         set(VERSION_RANGE TRUE)
 
-    elseif("${LINE}" MATCHES "\[[0-9.]*\]")
+    elseif("${LINE}" MATCHES "\\[[0-9.]*\\]")
 
         # Parse package version min
-        string(REGEX MATCH "\[[0-9.]*\]" PACKAGE_VERSION_MIN "${LINE}")
+        string(REGEX MATCH "\\[[0-9.]*\\]" PACKAGE_VERSION_MIN "${LINE}")
         string(REGEX REPLACE "\\[" "" PACKAGE_VERSION_MIN "${PACKAGE_VERSION_MIN}")
-        string(REGEX REPLACE "\]" "" PACKAGE_VERSION_MIN "${PACKAGE_VERSION_MIN}")
+        string(REGEX REPLACE "\\]" "" PACKAGE_VERSION_MIN "${PACKAGE_VERSION_MIN}")
 
         set(VERSION_MIN TRUE)
 
@@ -133,8 +152,20 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
             set(${PACKAGE_NAME}_USE_STATIC_LIBS ON)
         endif()
 
-        # Check for dependencies on the system
-        find_package(${PACKAGE_NAME} QUIET)
+        # Prepare components
+        string(REGEX REPLACE ";" " " PACKAGE_COMPONENTS_SYSTEM "${PACKAGE_COMPONENTS}")
+
+        if(PACKAGE_USE_COMPONENTS)
+
+            # Check for dependencies on the system
+            find_package(${PACKAGE_NAME} QUIET COMPONENTS ${PACKAGE_COMPONENTS_SYSTEM})
+
+        else()
+
+            # Check for dependencies on the system
+            find_package(${PACKAGE_NAME} QUIET)
+
+        endif()
 
         # Check if package found on the system
         if(${${PACKAGE_NAME}_FOUND})
@@ -240,6 +271,19 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
         # If shared package, try to force it
         if(PACKAGE_FORCE_SHARED)
             list(APPEND CONAN_OPTIONS "${PACKAGE_NAME}:shared=True")
+        endif()
+
+        # If components
+        if(PACKAGE_USE_COMPONENTS)
+
+            # Transform to lowercase
+            list(TRANSFORM PACKAGE_COMPONENTS TOLOWER)
+
+            # Foreach component, activate it
+            foreach(COMPONENT ${PACKAGE_COMPONENTS})
+                list(APPEND CONAN_OPTIONS "${PACKAGE_NAME}:${COMPONENT}=True")
+            endforeach()
+
         endif()
 
         # Print information
