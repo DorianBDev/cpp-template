@@ -12,12 +12,14 @@
 #### - "?pack/version"                                                   ####
 #### - "pack/version{list,of,component}$"                                ####
 #### - "!pack/version@conanRepository{list,of,component}$"               ####
-#### - "~pack/version@conanRepository{list,of,component}$"               ####
+#### - "~pack/version@conanRepository{!excluded,included}$"              ####
 ####                                                                     ####
 #### "!pack/version" -> System search only                               ####
 #### "~pack/version" -> System search only with no version check         ####
 #### "?pack/version" -> Conan search only                                ####
 #### "pack/version$" -> Shared                                           ####
+#### "pack/version{included}" -> included component needs to be there    ####
+#### "pack/version{!excluded}" -> excluded component will not be used    ####
 ####                                                                     ####
 #### Package names are case sensitive, see cmake find_package()          ####
 ####                                                                     ####
@@ -27,6 +29,6 @@
 #############################################################################
 #############################################################################
 
-SFML/2.5.1@bincrafters/stable{window,graphics}
+SFML/2.5.1@bincrafters/stable{window,graphics,!audio}
 ?SDL2/[2.0.12]@bincrafters/stable
 OpenCV/[4.1.2,4.5.1]$

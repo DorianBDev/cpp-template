@@ -19,7 +19,7 @@ string(REGEX REPLACE ";;" ";" DEPENDENCIES_FILE_CONTENT "${DEPENDENCIES_FILE_CON
 
 # Remove lines that start with a '#'
 foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
-    if("${LINE}" MATCHES "^(#.*|\\n)")
+    if(LINE MATCHES "^(#.*|\\n)")
         list(REMOVE_ITEM DEPENDENCIES_FILE_CONTENT "${LINE}")
         continue()
     endif()
@@ -42,14 +42,14 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
     if(LINE MATCHES "^!.*")
         set(PACKAGE_SYSTEM_ONLY TRUE)
         message(STATUS "${LINE}: System only")
-        string(REGEX REPLACE "!" "" LINE "${LINE}")
+        string(REGEX REPLACE "^!" "" LINE "${LINE}")
     endif()
 
     # Conan only
     if(LINE MATCHES "^\\?.*")
         set(PACKAGE_CONAN_ONLY TRUE)
         message(STATUS "${LINE}: Conan only")
-        string(REGEX REPLACE "\\?" "" LINE "${LINE}")
+        string(REGEX REPLACE "^\\?" "" LINE "${LINE}")
     endif()
 
     # Set default value for disabled version check
@@ -74,22 +74,36 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
         string(REGEX REPLACE "\\$" "" LINE "${LINE}")
     endif()
 
-    # Set default value for components
-    set(PACKAGE_USE_COMPONENTS FALSE)
+    # Reset components variables
+    unset(PACKAGE_COMPONENTS)
+    unset(PACKAGE_EXCLUDED_COMPONENTS)
 
     # Parse components
-    if("${LINE}" MATCHES "\\{[a-zA-Z,]*\\}")
+    if(LINE MATCHES "\\{[a-zA-Z,!]*\\}")
 
-        set(PACKAGE_USE_COMPONENTS TRUE)
+        # Matching and cleaning
+        string(REGEX MATCH "\\{[a-zA-Z,!]*\\}" COMPONENTS "${LINE}")
+        string(REGEX MATCHALL "[a-zA-Z!]*(,|})" PACKAGE_COMPONENTS_FULL "${COMPONENTS}")
+        string(REGEX REPLACE "\\}" "" PACKAGE_COMPONENTS_FULL "${PACKAGE_COMPONENTS_FULL}")
+        string(REGEX REPLACE "," "" PACKAGE_COMPONENTS_FULL "${PACKAGE_COMPONENTS_FULL}")
 
-        string(REGEX MATCH "\\{[a-zA-Z,]*\\}" COMPONENTS "${LINE}")
-        string(REGEX MATCHALL "[a-zA-Z]*(,|})" PACKAGE_COMPONENTS "${COMPONENTS}")
-        string(REGEX REPLACE "\\}" "" PACKAGE_COMPONENTS "${PACKAGE_COMPONENTS}")
-        string(REGEX REPLACE "," "" PACKAGE_COMPONENTS "${PACKAGE_COMPONENTS}")
+        # Create lists
+        foreach(COMPONENT ${PACKAGE_COMPONENTS_FULL})
+            if(COMPONENT MATCHES "!.*")
+                string(REGEX REPLACE "!" "" COMPONENT "${COMPONENT}")
+                list(APPEND PACKAGE_EXCLUDED_COMPONENTS "${COMPONENT}")
+            else()
+                list(APPEND PACKAGE_COMPONENTS "${COMPONENT}")
+            endif()
+        endforeach()
 
         string(REGEX REPLACE "\\{.*\\}" "" LINE "${LINE}")
 
-        message(STATUS "Components of ${LINE}: ${PACKAGE_COMPONENTS}")
+        if(PACKAGE_COMPONENTS)
+            message(STATUS "Components of ${LINE}: ${PACKAGE_COMPONENTS}")
+        endif()
+
+        message(STATUS "Excluded components of ${LINE}: ${PACKAGE_EXCLUDED_COMPONENTS}")
 
     endif()
 
@@ -102,7 +116,7 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
     set(VERSION_RANGE FALSE)
     set(VERSION_MIN FALSE)
 
-    if("${LINE}" MATCHES "\\[[0-9.]*,[0-9.]*\\]")
+    if(LINE MATCHES "\\[[0-9.]*,[0-9.]*\\]")
 
         # Parse package version min
         string(REGEX MATCH "\\[[0-9.]*," PACKAGE_VERSION_MIN "${LINE}")
@@ -116,7 +130,7 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
 
         set(VERSION_RANGE TRUE)
 
-    elseif("${LINE}" MATCHES "\\[[0-9.]*\\]")
+    elseif(LINE MATCHES "\\[[0-9.]*\\]")
 
         # Parse package version min
         string(REGEX MATCH "\\[[0-9.]*\\]" PACKAGE_VERSION_MIN "${LINE}")
@@ -155,7 +169,7 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
         # Prepare components
         string(REGEX REPLACE ";" " " PACKAGE_COMPONENTS_SYSTEM "${PACKAGE_COMPONENTS}")
 
-        if(PACKAGE_USE_COMPONENTS)
+        if(PACKAGE_COMPONENTS)
 
             # Check for dependencies on the system
             find_package(${PACKAGE_NAME} QUIET COMPONENTS ${PACKAGE_COMPONENTS_SYSTEM})
@@ -273,15 +287,28 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
             list(APPEND CONAN_OPTIONS "${PACKAGE_NAME}:shared=True")
         endif()
 
-        # If components
-        if(PACKAGE_USE_COMPONENTS)
+        # If components included
+        if(PACKAGE_COMPONENTS)
 
             # Transform to lowercase
             list(TRANSFORM PACKAGE_COMPONENTS TOLOWER)
 
-            # Foreach component, activate it
+            # Foreach component to include, activate it
             foreach(COMPONENT ${PACKAGE_COMPONENTS})
                 list(APPEND CONAN_OPTIONS "${PACKAGE_NAME}:${COMPONENT}=True")
+            endforeach()
+
+        endif()
+
+        # If components excluded
+        if(PACKAGE_EXCLUDED_COMPONENTS)
+
+            # Transform to lowercase
+            list(TRANSFORM PACKAGE_EXCLUDED_COMPONENTS TOLOWER)
+
+            # Foreach component to exclude, disable it
+            foreach(COMPONENT ${PACKAGE_EXCLUDED_COMPONENTS})
+                list(APPEND CONAN_OPTIONS "${PACKAGE_NAME}:${COMPONENT}=False")
             endforeach()
 
         endif()
