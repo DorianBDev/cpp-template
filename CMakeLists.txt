@@ -233,6 +233,13 @@ install (TARGETS ${PROJECT_NAME} DESTINATION out/bin)
 #
 # Output specifications
 #
+set_target_properties(${PROJECT_NAME}Core
+	PROPERTIES
+	ARCHIVE_OUTPUT_DIRECTORY "lib"
+	LIBRARY_OUTPUT_DIRECTORY "lib"
+	RUNTIME_OUTPUT_DIRECTORY "bin"
+)
+
 set_target_properties(${PROJECT_NAME}
     PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY "lib"

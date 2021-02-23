@@ -182,17 +182,14 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
     if(NOT DEFINED DISABLE_SYSTEM_DEPENDENCIES AND NOT PACKAGE_CONAN_ONLY)
 
         # If shared package, try to force it
-        if(PACKAGE_FORCE_SHARED)
+        if(NOT PACKAGE_FORCE_SHARED)
             set(${PACKAGE_NAME}_USE_STATIC_LIBS ON)
         endif()
-
-        # Prepare components
-        string(REGEX REPLACE ";" " " PACKAGE_COMPONENTS_SYSTEM "${PACKAGE_COMPONENTS}")
 
         if(PACKAGE_COMPONENTS)
 
             # Check for dependencies on the system
-            find_package(${PACKAGE_NAME} QUIET COMPONENTS ${PACKAGE_COMPONENTS_SYSTEM})
+            find_package(${PACKAGE_NAME} QUIET COMPONENTS ${PACKAGE_COMPONENTS})
 
         else()
 
@@ -251,8 +248,15 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
                     message(STATUS "${PACKAGE_NAME} on the system match version needs.")
 
                     # The system handle the package
-                    include_directories(${PACKAGE_NAME}_INCLUDE_DIRS)
-                    link_libraries(${PACKAGE_NAME}_LIBRARIES)
+                    include_directories(${${PACKAGE_NAME}_INCLUDE_DIRS})
+                    link_libraries(${${PACKAGE_NAME}_LIBRARIES})
+
+                    # Qt5 (and others) workaround
+                    if(NOT DEFINED ${PACKAGE_NAME}_LIBRARIES)
+                        foreach(COMPONENT ${PACKAGE_COMPONENTS})
+                            link_libraries(${PACKAGE_NAME}::${COMPONENT})
+                        endforeach()
+                    endif()
 
                 else()
 
