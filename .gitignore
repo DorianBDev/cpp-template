@@ -1,6 +1,7 @@
 build/*
 !build/.keepme
 .idea/
+DEPENDENCIES.local
 
 src/Version.h
 src/Config.h

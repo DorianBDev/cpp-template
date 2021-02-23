@@ -13,22 +13,17 @@
 #### - "pack/version{list,of,component}$"                                ####
 #### - "!pack/version@conanRepository{list,of,component}$"               ####
 #### - "~pack/version@conanRepository{!excluded,included}$"              ####
+#### - "!~pack/version@conanRepository"                                  ####
 ####                                                                     ####
 #### "!pack/version" -> System search only                               ####
 #### "~pack/version" -> No version check for system                      ####
 #### "?pack/version" -> Conan search only                                ####
 #### "pack/version$" -> Shared                                           ####
-#### "pack/version{included}" -> included component needs to be there    ####
-#### "pack/version{!excluded}" -> excluded component will not be used    ####
+#### "pack/version{comp}" -> 'comp' component that needs to be there     ####
+#### "pack/version{!comp}" -> 'comp' component that will not be used     ####
 ####                                                                     ####
 #### Package names are case sensitive, see cmake find_package()          ####
-####                                                                     ####
-#### You can also add a FindXXX.cmake file in the etc/cmake directory if ####
-#### the package finder script is not present in cmake by default        ####
 ####                                                                     ####
 #############################################################################
 #############################################################################
 
-~SFML/2.5.1@bincrafters/stable{graphics,!audio}
-!~SDL2/[2.0.12]@bincrafters/stable
-OpenCV/[4.1.2,4.5.1]$

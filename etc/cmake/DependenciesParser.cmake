@@ -8,8 +8,20 @@ if(DEFINED DISABLE_CONAN_DEPENDENCIES)
     message(STATUS "Conan is disabled")
 endif()
 
-# Read dependencies file
-file(READ "${PROJECT_SOURCE_DIR}/DEPENDENCIES" DEPENDENCIES_FILE_CONTENT)
+# Check if a local/user file exists
+if(EXISTS "${PROJECT_SOURCE_DIR}/DEPENDENCIES.local")
+
+    message(STATUS "Use the user/local 'DEPENDENCIES' file version")
+
+    # Read dependencies (local/user) file
+    file(READ "${PROJECT_SOURCE_DIR}/DEPENDENCIES.local" DEPENDENCIES_FILE_CONTENT)
+
+else()
+
+    # Read dependencies file
+    file(READ "${PROJECT_SOURCE_DIR}/DEPENDENCIES" DEPENDENCIES_FILE_CONTENT)
+
+endif()
 
 # Create the list
 string(REGEX REPLACE "\n" ";" DEPENDENCIES_FILE_CONTENT "${DEPENDENCIES_FILE_CONTENT}")
@@ -153,6 +165,16 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
     string(REGEX REPLACE "@" "" PACKAGE_REPOSITORY "${PACKAGE_REPOSITORY}")
     string(REGEX REPLACE ";" "" PACKAGE_REPOSITORY "${PACKAGE_REPOSITORY}")
 
+    # Unset previous search paths
+    unset(CMAKE_PREFIX_PATH)
+
+    # Add search path for CMake find_package()
+    if(DEFINED ${PACKAGE_NAME}_DEPENDENCY_PATH)
+        message(STATUS "${PACKAGE_NAME} path hint: ${${PACKAGE_NAME}_DEPENDENCY_PATH}")
+
+        list(APPEND CMAKE_PREFIX_PATH "${${PACKAGE_NAME}_DEPENDENCY_PATH}")
+    endif()
+
     # By default, conan will not handle
     set(CONAN_WILL_HANDLE FALSE)
 
@@ -185,8 +207,13 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
 
             if(NOT DEFINED ${${PACKAGE_NAME}_VERSION} AND NOT PACKAGE_NO_VERSION_CHECK)
 
-                message(STATUS "${PACKAGE_NAME} on the system don't have proper version number.")
-                set(CONAN_WILL_HANDLE TRUE)
+                if(NOT PACKAGE_SYSTEM_ONLY)
+                    message(STATUS "${PACKAGE_NAME} on the system doesn't have a proper version number.")
+                    set(CONAN_WILL_HANDLE TRUE)
+                else()
+                    message(FATAL_ERROR "${PACKAGE_NAME} on the system doesn't have a proper version number. "
+                            "You can disable version check by adding '~' in front of the package name in the 'DEPENDENCY' file.")
+                endif()
 
             else()
 
@@ -247,7 +274,12 @@ foreach(LINE ${DEPENDENCIES_FILE_CONTENT})
 
             # Warning message (or not, if conan is available)
             if(NOT DEFINED DISABLE_CONAN_DEPENDENCIES)
-                message(STATUS "${PACKAGE_NAME} not found on the system.")
+                if(NOT PACKAGE_SYSTEM_ONLY)
+                    message(STATUS "${PACKAGE_NAME} not found on the system.")
+                else()
+                    message(FATAL_ERROR "${PACKAGE_NAME} not found on the system. This error is generated because you "
+                            "forced the system check (which does not allow using Conan as a fallback)")
+                endif()
             else()
                 message(WARNING "${PACKAGE_NAME} not found on the system and Conan is disabled.")
             endif()
