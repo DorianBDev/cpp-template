@@ -7,7 +7,7 @@ env:
 
 jobs:
   address_sanitizer:
-    name: 📊 Address sanitizer
+    name: Address sanitizer
     runs-on: ubuntu-20.04 # Update Ubuntu version here.
 
     steps:
@@ -28,7 +28,7 @@ jobs:
         ctest --verbose
 
   thread_sanitizer:
-    name: 📊 Thread sanitizer
+    name: Thread sanitizer
     runs-on: ubuntu-20.04 # Update Ubuntu version here.
 
     steps:
@@ -49,7 +49,7 @@ jobs:
         ctest --verbose
 
   undefined_sanitizer:
-    name: 📊 Undefined sanitizer
+    name: Undefined behaviour sanitizer
     runs-on: ubuntu-20.04 # Update Ubuntu version here.
 
     steps:
@@ -70,7 +70,7 @@ jobs:
         ctest --verbose
 
   leak_sanitizer:
-    name: 📊 Leak sanitizer
+    name: Leak sanitizer
     runs-on: ubuntu-20.04 # Update Ubuntu version here.
 
     steps:
@@ -90,23 +90,23 @@ jobs:
         cd tests
         ctest --verbose
 
-  memory_sanitizer:
-    name: 📊 Memory sanitizer
-    runs-on: ubuntu-20.04 # Update Ubuntu version here.
-
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: Install Conan
-      shell: bash
-      run: |
-        sudo pip install conan
-
-    - name: Run memory sanitizer
-      shell: bash
-      run: |
-        cd build
-        cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DACTIVATE_SANITIZERS="Memory" -DCMAKE_CXX_COMPILER="/usr/bin/clang++" -DCMAKE_C_COMPILER="/usr/bin/clang"
-        cmake --build . --config $BUILD_TYPE
-        cd tests
-        ctest --verbose
+#  memory_sanitizer:
+#    name: Memory sanitizer
+#    runs-on: ubuntu-20.04 # Update Ubuntu version here.
+#
+#    steps:
+#    - uses: actions/checkout@v2
+#
+#    - name: Install Conan
+#      shell: bash
+#      run: |
+#        sudo pip install conan
+#
+#    - name: Run memory sanitizer
+#      shell: bash
+#      run: |
+#        cd build
+#        cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DACTIVATE_SANITIZERS="Memory" -DCMAKE_CXX_COMPILER="/usr/bin/clang++" -DCMAKE_C_COMPILER="/usr/bin/clang"
+#        cmake --build . --config $BUILD_TYPE
+#        cd tests
+#        ctest --verbose

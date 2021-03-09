@@ -7,7 +7,7 @@ env:
 
 jobs:
   build_gcc:
-    name: 🐧 GCC build
+    name: GCC build
     runs-on: ubuntu-18.04 # Update Ubuntu version here.
 
     steps:
@@ -32,7 +32,7 @@ jobs:
         ctest --verbose
 
   build_clang:
-    name: 🐧 Clang build
+    name: Clang build
     runs-on: ubuntu-18.04 # Update Ubuntu version here.
 
     steps:

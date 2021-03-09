@@ -186,7 +186,7 @@ if(DEFINED ACTIVATE_SANITIZERS)
 	set(CMAKE_CXX_FLAGS_TSAN
 			"-fsanitize=thread -g -O1")
 
-	# Undefined Behaviour sanitizer
+	# Undefined behaviour sanitizer
 	set(CMAKE_C_FLAGS_UBSAN
 			"-fsanitize=undefined")
 	set(CMAKE_CXX_FLAGS_UBSAN
