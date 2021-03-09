@@ -1,4 +1,4 @@
-name: 📊 Tidy check
+name: 📊 CppCheck check
 
 on: [push, pull_request, workflow_dispatch]
 
@@ -17,17 +17,16 @@ jobs:
       run: |
         sudo pip install conan
 
-    - name: Install clang-tidy
+    - name: Install cppcheck
       shell: bash
       run: |
         sudo apt-get update
-        sudo apt-get install -y clang-tidy
+        sudo apt-get install -y cppcheck
         cd build
         cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 
-    - name: Run clang-tidy
+    - name: Run cppcheck
       shell: bash
       run: |
         cd build
-        cmake --build . --config $BUILD_TYPE --target CheckCode
-        
+        cmake --build . --config $BUILD_TYPE --target CppCheck

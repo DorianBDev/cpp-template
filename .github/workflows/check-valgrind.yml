@@ -2,6 +2,9 @@ name: 📊 Valgrind check
 
 on: [push, pull_request, workflow_dispatch]
 
+env:
+  BUILD_TYPE: Debug # Change build type here.
+
 jobs:
   build:
     runs-on: ubuntu-20.04 # Update Ubuntu version here.
@@ -20,10 +23,10 @@ jobs:
         sudo apt-get update
         sudo apt-get install valgrind -y
         cd build
-        cmake .. -DCMAKE_BUILD_TYPE=Release
+        cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 
     - name: Run Valgrind
       shell: bash
       run: |
         cd build
-        cmake --build . --config Release --target Valgrind
+        cmake --build . --config $BUILD_TYPE --target Valgrind

@@ -67,6 +67,16 @@ list(APPEND CONAN_OPTIONS "")
 #
 #set(DISABLE_LINTERS TRUE)
 
+#
+# Uncomment (or use command line) to disable cppcheck targets.
+#
+#set(DISABLE_CPPCHECK TRUE)
+
+#
+# Uncomment (or use command line) to activate sanitizers. Possible values : "Address, Thread, Undefined, Leak, Memory"
+#
+#set(ACTIVATE_SANITIZERS "None")
+
 
 ############################################################################
 ############################ Basic setup ###################################
@@ -156,6 +166,70 @@ add_custom_command(
                                  -P "${CMAKE_CURRENT_SOURCE_DIR}/etc/cmake/ConfigureFiles.cmake"
         DEPENDS "${PROJECT_SOURCE_DIR}/VERSION"
 )
+
+
+############################################################################
+############################ SANITIZERS ####################################
+############################################################################
+
+if(DEFINED ACTIVATE_SANITIZERS)
+
+	# Address sanitizer
+	set(CMAKE_C_FLAGS_ASAN
+			"-fsanitize=address -fno-optimize-sibling-calls -fsanitize-address-use-after-scope -fno-omit-frame-pointer -g -O1")
+	set(CMAKE_CXX_FLAGS_ASAN
+			"-fsanitize=address -fno-optimize-sibling-calls -fsanitize-address-use-after-scope -fno-omit-frame-pointer -g -O1")
+
+	# Thread sanitizer
+	set(CMAKE_C_FLAGS_TSAN
+			"-fsanitize=thread -g -O1")
+	set(CMAKE_CXX_FLAGS_TSAN
+			"-fsanitize=thread -g -O1")
+
+	# Undefined Behaviour sanitizer
+	set(CMAKE_C_FLAGS_UBSAN
+			"-fsanitize=undefined")
+	set(CMAKE_CXX_FLAGS_UBSAN
+			"-fsanitize=undefined")
+
+	# Leak sanitizer
+	set(CMAKE_C_FLAGS_LSAN
+			"-fsanitize=leak -fno-omit-frame-pointer -g -O1")
+	set(CMAKE_CXX_FLAGS_LSAN
+			"-fsanitize=leak -fno-omit-frame-pointer -g -O1")
+
+	# Memory sanitizer
+	set(CMAKE_C_FLAGS_MSAN
+			"-fsanitize=memory -fno-optimize-sibling-calls -fsanitize-memory-track-origins=2 -fno-omit-frame-pointer -g -O2")
+	set(CMAKE_CXX_FLAGS_MSAN
+			"-fsanitize=memory -fno-optimize-sibling-calls -fsanitize-memory-track-origins=2 -fno-omit-frame-pointer -g -O2")
+
+	# Set flags
+	if (ACTIVATE_SANITIZERS STREQUAL "Address")
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_ASAN}")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_ASAN}")
+		message(STATUS "Address sanitizer activated")
+	elseif (ACTIVATE_SANITIZERS STREQUAL "Thread")
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_TSAN}")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_TSAN}")
+		message(STATUS "Thread sanitizer activated")
+	elseif (ACTIVATE_SANITIZERS STREQUAL "Undefined")
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_UBSAN}")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_UBSAN}")
+		message(STATUS "Undefined sanitizer activated")
+	elseif (ACTIVATE_SANITIZERS STREQUAL "Leak")
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_LSAN}")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_LSAN}")
+		message(STATUS "Leak sanitizer activated")
+	elseif (ACTIVATE_SANITIZERS STREQUAL "Memory")
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_MSAN}")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_MSAN}")
+		message(STATUS "Memory sanitizer activated")
+	else()
+		message(STATUS "No sanitizer activated")
+	endif()
+
+endif()
 
 
 ############################################################################
@@ -510,4 +584,19 @@ if(VALGRIND_EXE)
 	# Link tests to Valgrind target
 	add_dependencies(Valgrind ${PROJECT_NAME}Tests)
 		
+endif()
+
+
+############################################################################
+############################# CPP CHECK ####################################
+############################################################################
+
+find_program(CPPCHECK_EXE NAMES "cppcheck")
+if(NOT DEFINED DISABLE_CPPCHECK AND CPPCHECK_EXE AND ${CMAKE_GENERATOR} IN_LIST SUPPORTED_CODE_CHECK_GENERATORS)
+
+    # Add target for CppCheck
+    add_custom_target(CppCheck
+            COMMAND ${CPPCHECK_EXE} --includes-file="${CMAKE_CURRENT_SOURCE_DIR}/src/"
+			--project="${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json" --enable=all --error-exitcode=1)
+
 endif()

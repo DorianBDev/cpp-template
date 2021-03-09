@@ -1,0 +1,63 @@
+name: 📊 Sanitizers check
+
+on: [push, pull_request, workflow_dispatch]
+
+env:
+  BUILD_TYPE: Debug # Change build type here.
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04 # Update Ubuntu version here.
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install Conan
+      shell: bash
+      run: |
+        sudo pip install conan
+
+    - name: Address sanitizer
+      shell: bash
+      run: |
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DACTIVATE_SANITIZERS="Address"
+        cmake --build . --config $BUILD_TYPE
+        cd tests
+        ctest --verbose
+
+    - name: Thread sanitizer
+      shell: bash
+      run: |
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DACTIVATE_SANITIZERS="Thread"
+        cmake --build . --config $BUILD_TYPE
+        cd tests
+        ctest --verbose
+
+    - name: Undefined sanitizer
+      shell: bash
+      run: |
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DACTIVATE_SANITIZERS="Undefined"
+        cmake --build . --config $BUILD_TYPE
+        cd tests
+        ctest --verbose
+
+    - name: Leak sanitizer
+      shell: bash
+      run: |
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DACTIVATE_SANITIZERS="Leak"
+        cmake --build . --config $BUILD_TYPE
+        cd tests
+        ctest --verbose
+
+    - name: Memory sanitizer
+      shell: bash
+      run: |
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DACTIVATE_SANITIZERS="Memory"
+        cmake --build . --config $BUILD_TYPE
+        cd tests
+        ctest --verbose
