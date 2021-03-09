@@ -4,7 +4,7 @@ To adapt this template, you just need to edit the 'CMakeLists.txt' file with pro
 
 Also you can edit files in the root folder to suit your needs.
 
-This template was made by [**Dorian Bachelot**](https://github.com/DorianBDev) <dev@dorianb.net>.
+This template was made by [**Dorian Bachelot**](https://github.com/DorianBDev).
 
 ## Presentation
 

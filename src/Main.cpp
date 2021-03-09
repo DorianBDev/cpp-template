@@ -6,5 +6,8 @@ int main()
 {
     //TODO
 
+    // Example
+    std::cout << example(1);
+
     return 0;
 }

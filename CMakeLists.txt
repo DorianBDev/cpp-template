@@ -597,6 +597,7 @@ if(NOT DEFINED DISABLE_CPPCHECK AND CPPCHECK_EXE AND ${CMAKE_GENERATOR} IN_LIST 
     # Add target for CppCheck
     add_custom_target(CppCheck
             COMMAND ${CPPCHECK_EXE} --includes-file="${CMAKE_CURRENT_SOURCE_DIR}/src/"
-			--project="${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json" --enable=all --error-exitcode=1)
+			--project="${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json" --enable=all --error-exitcode=1
+			--suppress=missingIncludeSystem --suppress=unmatchedSuppression)
 
 endif()

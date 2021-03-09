@@ -6,7 +6,8 @@ env:
   BUILD_TYPE: Debug # Change build type here.
 
 jobs:
-  build:
+  address_sanitizer:
+    name: 📊 Address sanitizer
     runs-on: ubuntu-20.04 # Update Ubuntu version here.
 
     steps:
@@ -17,47 +18,95 @@ jobs:
       run: |
         sudo pip install conan
 
-    - name: Address sanitizer
+    - name: Run address sanitizer
       shell: bash
       run: |
         cd build
-        cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DACTIVATE_SANITIZERS="Address"
+        cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DACTIVATE_SANITIZERS="Address" -DCMAKE_CXX_COMPILER="/usr/bin/clang++" -DCMAKE_C_COMPILER="/usr/bin/clang"
         cmake --build . --config $BUILD_TYPE
         cd tests
         ctest --verbose
 
-    - name: Thread sanitizer
+  thread_sanitizer:
+    name: 📊 Thread sanitizer
+    runs-on: ubuntu-20.04 # Update Ubuntu version here.
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install Conan
+      shell: bash
+      run: |
+        sudo pip install conan
+
+    - name: Run thread sanitizer
       shell: bash
       run: |
         cd build
-        cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DACTIVATE_SANITIZERS="Thread"
+        cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DACTIVATE_SANITIZERS="Thread" -DCMAKE_CXX_COMPILER="/usr/bin/clang++" -DCMAKE_C_COMPILER="/usr/bin/clang"
         cmake --build . --config $BUILD_TYPE
         cd tests
         ctest --verbose
 
-    - name: Undefined sanitizer
+  undefined_sanitizer:
+    name: 📊 Undefined sanitizer
+    runs-on: ubuntu-20.04 # Update Ubuntu version here.
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install Conan
+      shell: bash
+      run: |
+        sudo pip install conan
+
+    - name: Run undefined sanitizer
       shell: bash
       run: |
         cd build
-        cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DACTIVATE_SANITIZERS="Undefined"
+        cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DACTIVATE_SANITIZERS="Undefined" -DCMAKE_CXX_COMPILER="/usr/bin/clang++" -DCMAKE_C_COMPILER="/usr/bin/clang"
         cmake --build . --config $BUILD_TYPE
         cd tests
         ctest --verbose
 
-    - name: Leak sanitizer
+  leak_sanitizer:
+    name: 📊 Leak sanitizer
+    runs-on: ubuntu-20.04 # Update Ubuntu version here.
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install Conan
+      shell: bash
+      run: |
+        sudo pip install conan
+
+    - name: Run leak sanitizer
       shell: bash
       run: |
         cd build
-        cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DACTIVATE_SANITIZERS="Leak"
+        cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DACTIVATE_SANITIZERS="Leak" -DCMAKE_CXX_COMPILER="/usr/bin/clang++" -DCMAKE_C_COMPILER="/usr/bin/clang"
         cmake --build . --config $BUILD_TYPE
         cd tests
         ctest --verbose
 
-    - name: Memory sanitizer
+  memory_sanitizer:
+    name: 📊 Memory sanitizer
+    runs-on: ubuntu-20.04 # Update Ubuntu version here.
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install Conan
+      shell: bash
+      run: |
+        sudo pip install conan
+
+    - name: Run memory sanitizer
       shell: bash
       run: |
         cd build
-        cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DACTIVATE_SANITIZERS="Memory"
+        cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DACTIVATE_SANITIZERS="Memory" -DCMAKE_CXX_COMPILER="/usr/bin/clang++" -DCMAKE_C_COMPILER="/usr/bin/clang"
         cmake --build . --config $BUILD_TYPE
         cd tests
         ctest --verbose
