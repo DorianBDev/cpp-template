@@ -82,4 +82,4 @@ add_custom_command(
 # Link doctest to ctest
 #
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/doctest.cmake)
-doctest_discover_tests(${PROJECT_NAME}Tests)
+doctest_discover_tests(${PROJECT_NAME}Tests ADD_LABELS 0) # Workaround for https://github.com/onqtam/doctest/issues/524
