@@ -114,6 +114,11 @@ else()
 endif()
 
 #
+# Export commands
+#
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
+
+#
 # Property for folders
 #
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -434,14 +439,6 @@ if(Python_FOUND AND NOT DEFINED DISABLE_LINTERS)
 
     # Filtered src folder path
     string(REGEX REPLACE "/" "." SOURCE_DIR_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/.*")
-	
-    # Export commands
-    #set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-    set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
-    if(NOT DEFINED ENV{CMAKE_EXPORT_COMPILE_COMMANDS})
-        message("ENV(CMAKE_EXPORT_COMPILE_COMMANDS) NOT DEFINED")
-        set($ENV{CMAKE_EXPORT_COMPILE_COMMANDS} TRUE)
-    endif()
 
     # Clang-tidy
     if(CLANG_TIDY AND ${CMAKE_GENERATOR} IN_LIST SUPPORTED_CODE_CHECK_GENERATORS)
@@ -603,6 +600,6 @@ if(NOT DEFINED DISABLE_CPPCHECK AND CPPCHECK_EXE AND ${CMAKE_GENERATOR} IN_LIST 
     add_custom_target(CppCheck
             COMMAND ${CPPCHECK_EXE} --includes-file="${CMAKE_CURRENT_SOURCE_DIR}/src/"
 			--project="${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json" --enable=all --error-exitcode=1
-			--suppress=missingIncludeSystem --suppress=unmatchedSuppression)
+			--suppress=missingIncludeSystem --suppress=unmatchedSuppression --suppress=*:${CMAKE_CURRENT_SOURCE_DIR}/tests/*)
 
 endif()
